@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diário AEE — Atendimento Educacional Especializado</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<!-- LINK PARA O SEU ARQUIVO CSS EXTERNO -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="lbox">
+    <div class="llogo">
+      <!-- LOGO NA TELA DE LOGIN -->
+      <img src="https://i.postimg.cc/cHCRRf12/niumvideo.jpg" alt="Logo Diário AEE" style="width: 80px; height: 80px; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;">
+      <h1>Diário AEE</h1>
+      <p>Atendimento Educacional Especializado</p>
+    </div>
+    <label>Usuário</label>
+    <input type="text" id="li-user" placeholder="CPF ou usuário" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+    <label>Senha</label>
+    <input type="password" id="li-pass" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="li-err" class="lerr">⚠ Usuário ou senha incorretos.</div>
+    <button class="btn-login" onclick="doLogin()">🔐 Entrar</button>
+    <!-- A mensagem de hint foi removida, mas você adicionou um novo div aqui. Vou mantê-lo. -->
+    <div>
+      <b>Desenvolvido:</b> @Erivaldo Silva<br>
+      <b>Diário AEE 2026 v1</b> 
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <!-- LOGO NA BARRA LATERAL -->
+      <img src="https://i.postimg.cc/cHCRRf12/niumvideo.jpg" alt="Logo Diário AEE" style="width: 30px; height: 30px; margin-right: 8px;">
+      <div class="bn">Diário AEE</div>
+      <div class="bs">Atend. Educacional Especializado</div>
+    </div>
+    <div class="sb-user">
+      <div class="un" id="sb-name">—</div>
+      <div class="ur" id="sb-role">—</div>
+    </div>
+    <div class="nst">Principal</div>
+    <div class="ni active" onclick="showPage('dashboard')"><span class="ico">🏠</span> Dashboard</div>
+    <div id="nav-cad">
+      <div class="nst">Cadastros</div>
+      <div class="ni" onclick="showPage('escolas')"><span class="ico">🏫</span> Escolas</div>
+      <div class="ni" onclick="showPage('gestores')"><span class="ico">👔</span> Gestores</div>
+      <div class="ni" onclick="showPage('coordenadores')"><span class="ico">📋</span> Coordenadores</div>
+      <div class="ni" onclick="showPage('professores')"><span class="ico">🎓</span> Professores</div>
+      <div class="ni" onclick="showPage('turmas')"><span class="ico">📚</span> Turmas</div>
+      <div class="ni" onclick="showPage('alunos')"><span class="ico">🧒</span> Alunos</div>
+    </div>
+    <div class="nst">Registros</div>
+    <div class="ni" onclick="showPage('por-aluno')"><span class="ico">👤</span> Por Aluno</div>
+    <div class="ni" onclick="showPage('por-sessao')"><span class="ico">📅</span> Por Sessão</div>
+    <div class="ni" onclick="showPage('frequencia')"><span class="ico">✅</span> Frequência</div>
+    <div class="ni" onclick="showPage('desempenho')"><span class="ico">📈</span> Desempenho</div>
+    <div class="nst">Integração</div>
+    <div class="ni" onclick="showPage('configuracoes')"><span class="ico">⚙️</span> Google Sheets</div>
+    <div class="sb-foot">
+      <button class="btn-out" onclick="doLogout()">⬅ Sair</button>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="ph">
+        <div class="ph-t">🏠 Dashboard</div>
+        <div class="ph-a">
+          <button class="btn btn-sheets" onclick="sincronizarTudo()">🔄 Sincronizar Planilha</button>
+          <button class="btn btn-pdf" onclick="pdfDash()">📄 Gerar PDF</button>
+        </div>
+      </div>
+      <div class="prof-aviso" id="aviso-prof">🔒 Dados dos Alunos de sua Turma AEE 2026.</div>
+      <div class="stats">
+        <div class="stat">    <div class="sn" id="d-esc">0</div><div class="sl">Escolas</div></div>>
+        <div class="stat s2"><div class="sn" id="d-alu">0</div><div class="sl">Alunos</div></div>>
+        <div class="stat s3"><div class="sn" id="d-pro">0</div><div class="sl">Professores</div></div>>
+        <div class="stat s4"><div class="sn" id="d-ses">0</div><div class="sl">Sessões</div></div>>
+        <div class="stat s5"><div class="sn" id="d-fre">0</div><div class="sl">Freq. Registradas</div></div>>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>📅 Últimas Sessões</h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Data</th><th>Professor</th><th>Tema</th><th>Alunos</th></tr></thead>
+        <tbody id="d-sessoes"><tr class="erow"><td>Nenhuma sessão registrada.</td></tr></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>🧒 Últimos Alunos Cadastrados</h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Nome</th><th>NEE</th><th>Escola</th><th>Turma</th></tr></thead>
+        <tbody id="d-alunos"><tr class="erow"><td>Nenhum aluno cadastrado.</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES GOOGLE SHEETS -->
+    <div id="page-configuracoes" class="page">
+      <div class="ph"><div class="ph-t">⚙️ Configuração — Google Sheets</div></div>
+      <div class="card">
+        <div class="ch"><h3>🔗 Conexão com Google Sheets</h3></div>
+        <div class="cb2">
+          <div class="sheets-box">
+            <h4>📋 URL do Apps Script (Web App)</h4>
+            <p style="font-size:.8rem;color:#2e7d32;margin-bottom:8px">Cole aqui a URL gerada ao implantar o Apps Script como Web App no Google Sheets.</p>
+            <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/AKfycbzKNzABuqbqRBl0VPYyFzaH_sAANSB-DnUPQUZ76oxa3YwE-zynvL9nybTAKe5tl_R1/exec" oninput="salvarConfigUrl()">
+            <div id="cfg-status" style="margin-top:8px;font-size:.76rem;color:var(--mu);font-weight:600">⬆ Cole a URL acima para ativar a integração.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-sheets" onclick="testarConexao()">🔌 Testar Conexão</button>
+            <button class="btn btn-sheets" onclick="sincronizarTudo()">🔄 Sincronizar Todos os Dados</button>
+            <button class="btn btn-p" onclick="carregarDoSheets()">⬇ Carregar da Planilha</button>
+          </div>
+          <div style="margin-top:22px;padding:16px;background:#f4f7fb;border-radius:9px">
+            <b style="font-size:.88rem;color:var(--p)">📖 Como configurar passo a passo:</b>
+            <ol style="font-size:.82rem;color:var(--tx);line-height:2.1;padding-left:18px;margin-top:8px">
+              <li>Acesse <b>sheets.google.com</b> e crie uma planilha em branco</li>
+              <li>Clique em <b>Extensões → Apps Script</b></li>
+              <li>Apague o código existente, cole o código Apps Script e execute <b>criarPlanilha()</b></li>
+              <li>Autorize as permissões solicitadas pelo Google</li>
+              <li>Clique em <b>Implantar → Nova implantação → App da Web</b></li>
+              <li>Em "Quem tem acesso" selecione <b>Qualquer pessoa</b></li>
+              <li>Clique em <b>Implantar</b> e copie a URL gerada</li>
+              <li>Cole a URL no campo acima e clique em <b>Testar Conexão</b></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESCOLAS -->
+    <div id="page-escolas" class="page">
+      <div class="ph">
+        <div class="ph-t">🏫 Escolas</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('escola')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('escola')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('escola')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Novo Cadastro de Escola</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-escola">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('escola')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Nome da Escola *</label><input id="esc-nome" type="text"></div>
+            <div class="f"><label>CNPJ / INEP</label><input id="esc-cnpj" type="text" placeholder="00.000.000/0000-00"></div>
+            <div class="f"><label>Rede</label>
+              <select id="esc-rede"><option value="">Selecione...</option>
+                <option>Pública</option><option>Municipal</option><option>Estadual</option><option>Privada</option>
+              </select>
+            </div>
+            <div class="f"><label>Etapa de Ensino (Ctrl+clique)</label>
+              <select id="esc-etapa" multiple>
+                <option>Educação Infantil</option><option>Fundamental I</option><option>Fundamental II</option>
+                <option>Ensino Médio</option><option>EJA</option>
+              </select>
+            </div>
+            <div class="f"><label>Telefone</label><input id="esc-tel" type="text"></div>
+            <div class="f"><label>E-mail Institucional</label><input id="esc-email" type="email"></div>
+            <div class="f full"><label>Endereço Completo</label><input id="esc-end" type="text"></div>
+            <div class="f full"><label>Observações</label><textarea id="esc-obs"></textarea></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="besc-s" onclick="salvar('escola')">💾 Salvar</button>
+            <button class="btn btn-w" id="besc-a" onclick="atualizar('escola')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('escola')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>🏫 Escolas Cadastradas <span class="cbt" id="cnt-escola">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Nome</th><th>CNPJ</th><th>Rede</th><th>Etapa</th><th>Telefone</th><th>E-mail</th><th>Endereço</th><th>Obs</th><th>Ações</th></tr></thead>
+        <tbody id="tb-escola"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- GESTORES -->
+    <div id="page-gestores" class="page">
+      <div class="ph">
+        <div class="ph-t">👔 Gestores</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('gestor')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('gestor')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('gestor')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Novo Cadastro de Gestor</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-gestor">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('gestor')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Nome Completo *</label><input id="ges-nome" type="text"></div>
+            <div class="f"><label>CPF *</label><input id="ges-cpf" type="text"></div>
+            <div class="f"><label>Escola</label><select id="ges-escola"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Cargo</label>
+              <select id="ges-cargo"><option value="">Selecione...</option>
+                <option>Diretor(a)</option><option>Vice-Diretor(a)</option><option>Diretor(a) Adjunto(a)</option>
+              </select>
+            </div>
+            <div class="f"><label>Telefone</label><input id="ges-tel" type="text"></div>
+            <div class="f"><label>E-mail</label><input id="ges-email" type="email"></div>
+            <div class="f"><label>Formação Acadêmica</label><input id="ges-formacao" type="text"></div>
+            <div class="f"><label>Início na Função</label><input id="ges-inicio" type="date"></div>
+            <div class="f full"><label>Observações</label><textarea id="ges-obs"></textarea></div>
+            <div class="f"><label>Usuário (login)</label><input id="ges-user" type="text"></div>
+            <div class="f"><label>Senha (login)</label><input id="ges-pass" type="text"></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="bges-s" onclick="salvar('gestor')">💾 Salvar</button>
+            <button class="btn btn-w" id="bges-a" onclick="atualizar('gestor')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('gestor')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>👔 Gestores Cadastrados <span class="cbt" id="cnt-gestor">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Nome</th><th>CPF</th><th>Escola</th><th>Cargo</th><th>Telefone</th><th>E-mail</th><th>Formação</th><th>Início</th><th>Ações</th></tr></thead>
+        <tbody id="tb-gestor"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- COORDENADORES -->
+    <div id="page-coordenadores" class="page">
+      <div class="ph">
+        <div class="ph-t">📋 Coordenadores</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('coordenador')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('coordenador')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('coordenador')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Novo Cadastro de Coordenador</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-coordenador">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('coordenador')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Nome Completo *</label><input id="coo-nome" type="text"></div>
+            <div class="f"><label>CPF *</label><input id="coo-cpf" type="text"></div>
+            <div class="f"><label>Escola</label><select id="coo-escola"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Área de Atuação</label><input id="coo-area" type="text"></div>
+            <div class="f"><label>Turno</label>
+              <select id="coo-turno"><option value="">Selecione...</option>
+                <option>Matutino</option><option>Vespertino</option><option>Noturno</option><option>Integral</option>
+              </select>
+            </div>
+            <div class="f"><label>Telefone</label><input id="coo-tel" type="text"></div>
+            <div class="f"><label>E-mail</label><input id="coo-email" type="email"></div>
+            <div class="f"><label>Formação Acadêmica</label><input id="coo-formacao" type="text"></div>
+            <div class="f full"><label>Observações</label><textarea id="coo-obs"></textarea></div>
+            <div class="f"><label>Usuário (login)</label><input id="coo-user" type="text"></div>
+            <div class="f"><label>Senha (login)</label><input id="coo-pass" type="text"></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="bcoo-s" onclick="salvar('coordenador')">💾 Salvar</button>
+            <button class="btn btn-w" id="bcoo-a" onclick="atualizar('coordenador')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('coordenador')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>📋 Coordenadores Cadastrados <span class="cbt" id="cnt-coordenador">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Nome</th><th>CPF</th><th>Escola</th><th>Área</th><th>Turno</th><th>Telefone</th><th>E-mail</th><th>Formação</th><th>Ações</th></tr></thead>
+        <tbody id="tb-coordenador"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PROFESSORES -->
+    <div id="page-professores" class="page">
+      <div class="ph">
+        <div class="ph-t">🎓 Professores</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('professor')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('professor')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('professor')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Novo Cadastro de Professor</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-professor">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('professor')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Nome Completo *</label><input id="pro-nome" type="text"></div>
+            <div class="f"><label>CPF *</label><input id="pro-cpf" type="text"></div>
+            <div class="f"><label>Escola</label><select id="pro-escola"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Especialidade</label><input id="pro-esp" type="text"></div>
+            <div class="f"><label>Turno</label>
+              <select id="pro-turno"><option value="">Selecione...</option>
+                <option>Matutino</option><option>Vespertino</option><option>Noturno</option><option>Integral</option>
+              </select>
+            </div>
+            <div class="f"><label>Vínculo</label>
+              <select id="pro-vinculo"><option value="">Selecione...</option>
+                <option>Efetivo</option><option>Contratado</option><option>Substituto</option>
+              </select>
+            </div>
+            <div class="f"><label>Registro Profissional</label><input id="pro-reg" type="text"></div>
+            <div class="f"><label>Telefone</label><input id="pro-tel" type="text"></div>
+            <div class="f"><label>E-mail</label><input id="pro-email" type="email"></div>
+            <div class="f"><label>Formação Acadêmica</label><input id="pro-formacao" type="text"></div>
+            <div class="f full"><label>Observações</label><textarea id="pro-obs"></textarea></div>
+            <div class="f"><label>Usuário (login)</label><input id="pro-user" type="text"></div>
+            <div class="f"><label>Senha (login)</label><input id="pro-pass" type="text"></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="bpro-s" onclick="salvar('professor')">💾 Salvar</button>
+            <button class="btn btn-w" id="bpro-a" onclick="atualizar('professor')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('professor')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>🎓 Professores Cadastrados <span class="cbt" id="cnt-professor">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Nome</th><th>CPF</th><th>Escola</th><th>Especialidade</th><th>Turno</th><th>Vínculo</th><th>Telefone</th><th>E-mail</th><th>Ações</th></tr></thead>
+        <tbody id="tb-professor"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- TURMAS -->
+    <div id="page-turmas" class="page">
+      <div class="ph">
+        <div class="ph-t">📚 Turmas</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('turma')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('turma')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('turma')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Novo Cadastro de Turma</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-turma">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('turma')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Nome da Turma *</label><input id="tur-nome" type="text"></div>
+            <div class="f"><label>Escola</label><select id="tur-escola"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Turno</label>
+              <select id="tur-turno"><option value="">Selecione...</option>
+                <option>Matutino</option><option>Vespertino</option><option>Noturno</option><option>Integral</option>
+              </select>
+            </div>
+            <div class="f"><label>Professor Responsável</label><select id="tur-professor"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Ano Letivo</label><input id="tur-ano" type="number" min="2000" max="2100" value="2026"></div>
+            <div class="f full"><label>Observações</label><textarea id="tur-obs"></textarea></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="btur-s" onclick="salvar('turma')">💾 Salvar</button>
+            <button class="btn btn-w" id="btur-a" onclick="atualizar('turma')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('turma')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>📚 Turmas Cadastradas <span class="cbt" id="cnt-turma">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Nome</th><th>Escola</th><th>Turno</th><th>Professor</th><th>Ano Letivo</th><th>Obs</th><th>Ações</th></tr></thead>
+        <tbody id="tb-turma"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ALUNOS -->
+    <div id="page-alunos" class="page">
+      <div class="ph">
+        <div class="ph-t">🧒 Alunos</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('aluno')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('aluno')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('aluno')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Novo Cadastro de Aluno</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-aluno">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('aluno')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Nome Completo *</label><input id="alu-nome" type="text"></div>
+            <div class="f"><label>Data de Nascimento</label><input id="alu-nasc" type="date"></div>
+            <div class="f"><label>Sexo</label>
+              <select id="alu-sexo"><option value="">Selecione...</option>
+                <option>Masculino</option><option>Feminino</option><option>Outro</option>
+              </select>
+            </div>
+            <div class="f"><label>Escola</label><select id="alu-escola"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Turma</label><select id="alu-turma"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Turno</label>
+              <select id="alu-turno"><option value="">Selecione...</option>
+                <option>Matutino</option><option>Vespertino</option><option>Noturno</option><option>Integral</option>
+              </select>
+            </div>
+            <div class="f"><label>Necessidade Educacional Especial (NEE)</label><input id="alu-nee" type="text"></div>
+            <div class="f"><label>CID-10</label><input id="alu-cid" type="text"></div>
+            <div class="f"><label>Nome do Responsável</label><input id="alu-resp" type="text"></div>
+            <div class="f"><label>Telefone do Responsável</label><input id="alu-tel" type="text"></div>
+            <div class="f"><label>E-mail do Responsável</label><input id="alu-remail" type="email"></div>
+            <div class="f"><label>Professor AEE Responsável</label><select id="alu-professor"><option value="">Selecione...</option></select></div>
+            <div class="f full"><label>Laudo / Diagnóstico</label><textarea id="alu-laudo"></textarea></div>
+            <div class="f full"><label>Adaptações Curriculares</label><textarea id="alu-adapt"></textarea></div>
+            <div class="f full"><label>Observações</label><textarea id="alu-obs"></textarea></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="balu-s" onclick="salvar('aluno')">💾 Salvar</button>
+            <button class="btn btn-w" id="balu-a" onclick="atualizar('aluno')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('aluno')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>🧒 Alunos Cadastrados <span class="cbt" id="cnt-aluno">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Nome</th><th>Nasc.</th><th>Sexo</th><th>Escola</th><th>Turma</th><th>Turno</th><th>NEE</th><th>CID</th><th>Responsável</th><th>Telefone</th><th>Prof. AEE</th><th>Ações</th></tr></thead>
+        <tbody id="tb-aluno"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- POR ALUNO -->
+    <div id="page-por-aluno" class="page">
+      <div class="ph">
+        <div class="ph-t">👤 Registro por Aluno</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('reg-aluno')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('reg-aluno')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('reg-aluno')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3 id="t-reg-aluno">➕ Novo Registro por Aluno</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-reg-aluno">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('reg-aluno')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Aluno *</label><select id="ra-aluno"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Data *</label><input id="ra-data" type="date"></div>
+            <div class="f"><label>Tipo de Atendimento</label>
+              <select id="ra-tipo"><option value="">Selecione...</option>
+                <option>Individual</option><option>Dupla</option><option>Pequeno Grupo</option>
+              </select>
+            </div>
+            <div class="f"><label>Área de Foco</label>
+  <select id="a-area">
+    <option value="">Selecione...</option>
+    <option>Comunicação / Linguagem</option>
+    <option>Autonomia e Independência</option>
+    <option>Habilidades Sociais</option>
+    <option>Cognição e Aprendizagem</option>
+    <option>Motricidade</option>
+    <option>Comportamento e Autorregulação</option>
+    <option>Desenvolvimento de Funções Cognitivas</option>
+    <option>Desenvolvimento de Vida Autônoma</option>
+    <option>Enriquecimento Curricular</option>
+    <option>Ensino da Informática Acessível</option>
+    <option>Ensino da Língua Brasileira de Sinais (LIBRAS)</option>
+    <option>Ensino da Língua Portuguesa como Segunda Língua</option>
+    <option>Ensino das Técnicas de Cálculo no Soroban</option>
+    <option>Ensino de Técnicas para Orientação e Mobilidade</option>
+    <option>Ensino do Sistema Braille</option>
+    <option>Ensino do Uso da Comunicação Alternativa e Aumentativa (CAA)</option>
+    <option>Ensino do Uso de Recursos Ópticos e Não Ópticos</option>
+    <option>Outro</option>
+  </select>
+            </div>
+            <div class="f full"><label>Atividades Realizadas</label><textarea id="ra-ativ"></textarea></div>
+            <div class="f full"><label>Evolução Observada</label><textarea id="ra-evol"></textarea></div>
+            <div class="f full"><label>Observações / Próximos Passos</label><textarea id="ra-obs"></textarea></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="bra-s" onclick="salvar('reg-aluno')">💾 Salvar Registro</button>
+            <button class="btn btn-w" id="bra-a" onclick="atualizar('reg-aluno')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('reg-aluno')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>📋 Registros por Aluno <span class="cbt" id="cnt-reg-aluno">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Data</th><th>Aluno</th><th>Tipo</th><th>Área</th><th>Atividades</th><th>Evolução</th><th>Obs.</th><th>Ações</th></tr></thead>
+        <tbody id="tb-reg-aluno"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- POR SESSÃO -->
+    <div id="page-por-sessao" class="page">
+      <div class="ph">
+        <div class="ph-t">📅 Registro por Sessão</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('sessao')">📄 PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('sessao')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('sessao')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3 id="t-sessao">➕ Nova Sessão</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-sessao">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('sessao')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Data *</label><input id="ses-data" type="date"></div>
+            <div class="f"><label>Horário</label><input id="ses-hora" type="time"></div>
+            <div class="f"><label>Professor Responsável</label><select id="ses-professor"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Local</label><input id="ses-local" type="text"></div>
+            <div class="f"><label>Tema da Sessão - FOCO</label>
+              <select id="ses-tema"><option value="">Selecione......</option>
+    <option>Comunicação / Linguagem</option>
+    <option>Autonomia e Independência</option>
+    <option>Habilidades Sociais</option>
+    <option>Cognição e Aprendizagem</option>
+    <option>Motricidade</option>
+    <option>Comportamento e Autorregulação</option>
+    <option>Desenvolvimento de Funções Cognitivas</option>
+    <option>Desenvolvimento de Vida Autônoma</option>
+    <option>Enriquecimento Curricular</option>
+    <option>Ensino da Informática Acessível</option>
+    <option>Ensino da Língua Brasileira de Sinais (LIBRAS)</option>
+    <option>Ensino da Língua Portuguesa como Segunda Língua</option>
+    <option>Ensino das Técnicas de Cálculo no Soroban</option>
+    <option>Ensino de Técnicas para Orientação e Mobilidade</option>
+    <option>Ensino do Sistema Braille</option>
+    <option>Ensino do Uso da Comunicação Alternativa e Aumentativa (CAA)</option>
+    <option>Ensino do Uso de Recursos Ópticos e Não Ópticos</option>
+    <option>Outro</option>
+              </select>
+            </div>
+            <div class="f"><label>Alunos Participantes (Ctrl+clique)</label>
+              <select id="ses-alunos" multiple style="min-height:90px"></select>
+            </div>
+            <div class="f full"><label>Atividades Desenvolvidas</label><textarea id="ses-ativ"></textarea></div>
+            <div class="f full"><label>Recursos Utilizados</label><textarea id="ses-rec"></textarea></div>
+            <div class="f full"><label>Observações</label><textarea id="ses-obs"></textarea></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="bses-s" onclick="salvar('sessao')">💾 Salvar Sessão</button>
+            <button class="btn btn-w" id="bses-a" onclick="atualizar('sessao')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('sessao')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>📅 Sessões Registradas <span class="cbt" id="cnt-sessao">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Data</th><th>Hora</th><th>Professor</th><th>Tema</th><th>Alunos</th><th>Atividades</th><th>Recursos</th><th>Obs.</th><th>Ações</th></tr></thead>
+        <tbody id="tb-sessao"></tbody></table></div>
+      </div>
+    </div>
+
+
+    <!-- FREQUÊNCIA -->
+    <div id="page-frequencia" class="page">
+      <div class="ph">
+        <div class="ph-t">✅ Frequência</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('frequencia')">📄 Gerar PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('frequencia')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('frequencia')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Registrar Frequência</h3></div>
+        <div class="cb2">
+          <div class="fg">
+            <div class="f"><label>Data *</label><input id="fre-data" type="date"></div>
+            <div class="f"><label>Turma *</label><select id="fre-turma" onchange="carregarAlunosTurma()"><option value="">Selecione a turma...</option></select></div>
+          </div>
+          <div style="margin-top:20px;margin-bottom:15px;font-weight:700;color:var(--p)">Alunos da Turma:</div>
+          <div id="fre-lista" style="border:1px solid var(--bo);border-radius:8px;padding:15px;background:#f8fafc">
+            <div style="text-align:center;color:var(--mu);padding:20px;font-style:italic">👆 Selecione uma turma para carregar os alunos.</div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" onclick="salvarFrequencia()">💾 Salvar Frequência</button>
+            <button class="btn btn-s" onclick="limpar('frequencia')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>✅ Registros de Frequência <span class="cbt" id="cnt-frequencia">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Data</th><th>Turma</th><th>Aluno</th><th>Status</th><th>Justificativa</th><th>Ações</th></tr></thead>
+        <tbody id="tb-frequencia"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- DESEMPENHO -->
+    <div id="page-desempenho" class="page">
+      <div class="ph">
+        <div class="ph-t">📈 Desempenho</div>
+        <div class="ph-a">
+          <button class="btn btn-pdf" onclick="gerarPDF('desempenho')">📄 Gerar PDF</button>
+          <button class="btn btn-exp" onclick="exportCSV('desempenho')">📊 CSV</button>
+          <button class="btn btn-sheets" onclick="enviarParaSheets('desempenho')">📋 Enviar Planilha</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>➕ Registrar Desempenho</h3></div>
+        <div class="cb2">
+          <div class="eban" id="ban-desempenho">✏️ Modo Edição. <button class="bcan" onclick="cancelEdit('desempenho')">✕ Cancelar</button></div>
+          <div class="fg">
+            <div class="f"><label>Data *</label><input id="des-data" type="date"></div>
+            <div class="f"><label>Aluno *</label><select id="des-aluno"><option value="">Selecione...</option></select></div>
+            <div class="f"><label>Área Avaliada</label>
+              <select id="des-area"><option value="">Selecione...</option>
+                <option>Cognitiva</option><option>Motora</option><option>Social</option>
+                <option>Comunicação</option><option>Comportamental</option><option>Autonomia</option>
+                <option>Pedagógica</option><option>Outra</option>
+              </select>
+            </div>
+            <div class="f"><label>Nível de Desempenho</label>
+              <select id="des-nivel"><option value="">Selecione...</option>
+                <option>Não Iniciado</option><option>Em Desenvolvimento</option>
+                <option>Consolidado</option><option>Avançado</option>
+              </select>
+            </div>
+            <div class="f full"><label>Observações</label><textarea id="des-obs"></textarea></div>
+            <div class="f full"><label>Recomendações</label><textarea id="des-rec"></textarea></div>
+          </div>
+          <div class="br">
+            <button class="btn btn-p" id="bdes-s" onclick="salvar('desempenho')">💾 Salvar</button>
+            <button class="btn btn-w" id="bdes-a" onclick="atualizar('desempenho')" style="display:none">🔄 Atualizar</button>
+            <button class="btn btn-s" onclick="limpar('desempenho')">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>📈 Registros de Desempenho <span class="cbt" id="cnt-desempenho">0</span></h3></div>
+        <div class="cb2 tw"><table><thead><tr><th>Data</th><th>Aluno</th><th>Área</th><th>Nível</th><th>Observações</th><th>Recomendações</th><th>Ações</th></tr></thead>
+        <tbody id="tb-desempenho"></tbody></table></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="modal-view" class="ov">
+  <div class="modal">
+    <div class="mh">
+      <h2 id="modal-title">Detalhes</h2>
+      <button class="bmc" onclick="fecharModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- LINK PARA O SEU ARQUIVO JAVASCRIPT EXTERNO -->
+<script src="script.js"></script>
+</body>
+</html>
