@@ -154,7 +154,6 @@ function doLoginAttempt(u, p, err){
   err.textContent = '⚠ Usuário ou senha incorretos.';
 }
 
-
 function entrarApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
@@ -168,13 +167,13 @@ function entrarApp(){
     navCad.style.display = 'block';
     // Esconder itens específicos para gestores/coordenadores
     if(currentUser.role === 'gestor' || currentUser.role === 'coordenador'){
-      document.querySelector('.ni[onclick="showPage(\'escolas\')"]').style.display = 'none';
-      document.querySelector('.ni[onclick="showPage(\'gestores\')"]').style.display = 'none';
-      document.querySelector('.ni[onclick="showPage(\'coordenadores\')"]').style.display = 'none';
+      document.querySelector('.ni[onclick="showPage(\'escola\')"]').style.display = 'none';
+      document.querySelector('.ni[onclick="showPage(\'gestor\')"]').style.display = 'none';
+      document.querySelector('.ni[onclick="showPage(\'coordenador\')"]').style.display = 'none';
     } else { // Admin vê tudo
-      document.querySelector('.ni[onclick="showPage(\'escolas\')"]').style.display = 'flex';
-      document.querySelector('.ni[onclick="showPage(\'gestores\')"]').style.display = 'flex';
-      document.querySelector('.ni[onclick="showPage(\'coordenadores\')"]').style.display = 'flex';
+      document.querySelector('.ni[onclick="showPage(\'escola\')"]').style.display = 'flex';
+      document.querySelector('.ni[onclick="showPage(\'gestor\')"]').style.display = 'flex';
+      document.querySelector('.ni[onclick="showPage(\'coordenador\')"]').style.display = 'flex';
     }
   } else {
     navCad.style.display = 'none';
@@ -393,7 +392,10 @@ function carregarDoSheets(){
             keys.forEach(function(k,i){ obj[k] = linha[i] || ''; });
             return obj;
           });
-          renderTabela(tipo);
+          // Não renderiza a tabela de frequência aqui para que só apareça ao buscar
+          if (tipo !== 'frequencia') {
+            renderTabela(tipo);
+          }
         }
         carregados++;
         if(carregados === tipos.length){
@@ -428,7 +430,14 @@ function showPage(id){
   });
   if(id==='dashboard') atualizarDashboard();
   popularSelects();
-  if(id==='frequencia') popularFreqTurma();
+  if(id==='frequencia') {
+    popularFreqTurma();
+    // Limpa a tabela de frequência ao entrar na página
+    document.getElementById('tb-frequencia').innerHTML = '<tr class="erow"><td colspan="6">Nenhum registro cadastrado.</td></tr>';
+    document.getElementById('cnt-frequencia').textContent = '0';
+    document.getElementById('filter-fre-data').value = '';
+    document.getElementById('filter-fre-turma').value = '';
+  }
 }
 
 // ================================================
@@ -465,7 +474,7 @@ function popularSelects(){
     el.value=v;
   });
 
-  // Selects de Aluno (filtrados por professor ou escola)
+  // Select de Aluno (filtrados por professor ou escola)
   var alunosFiltrados = getAlunosFiltrados();
   ['ra-aluno','des-aluno'].forEach(function(sid){
     var el=document.getElementById(sid); if(!el) return;
@@ -561,9 +570,25 @@ function carregarAlunosTurma(){
     html+='<select name="freq_'+esc(a.nome)+'">';
     html+='<option value="Presente">✅ Presente</option>';
     html+='<option value="Falta">❌ Falta</option>';
+    html+='<option value="Não tem atendimento no dia de hoje">⚠️ Não tem atendimento no dia de hoje</option>';
     html+='<option value="Justificado">📝 Justificado</option>';
     html+='</select>';
-    html+='<input type="text" placeholder="Justificativa (opcional)" name="just_'+esc(a.nome)+'">';
+    // AQUI É A MUDANÇA: de input para select
+    html+='<select name="just_'+esc(a.nome)+'">';
+    html+='<option value="">Selecione a Justificativa</option>';
+    html+='<option value="Atendimento Domiciliar (AD)">Atendimento Domiciliar (AD)</option>';
+    html+='<option value="Atestado Médico (AM)">Atestado Médico (AM)</option>';
+    html+='<option value="Casos Omisso (CO)">Casos Omisso (CO)</option>';
+    html+='<option value="Declaração de Comparecimento à consulta medica (DC)">Declaração de Comparecimento à consulta medica (DC)</option>';
+    html+='<option value="Declaração dos Pais ou Responsáveis (DP)">Declaração dos Pais ou Responsáveis (DP)</option>';
+    html+='<option value="Estudante Atleta (EA)">Estudante Atleta (EA)</option>';
+    html+='<option value="Estudante não tem atendimento no dia de hoje (EADH)">Estudante não tem atendimento no dia de hoje (EADH)</option>';
+    html+='<option value="Estudante Gestante (EG)">Estudante Gestante (EG)</option>';
+    html+='<option value="Estudante Trabalhador (ET)">Estudante Trabalhador (ET)</option>';
+    html+='<option value="Falta de Transporte Escolar (FTE)">Falta de Transporte Escolar (FTE)</option>';
+    html+='<option value="Pandemia (PAND)">Pandemia (PAND)</option>';
+    html+='<option value="Outros">Outros</option>';
+    html+='</select>';
     html+='</div>';
   });
   lista.innerHTML=html;
@@ -581,7 +606,9 @@ var FIELDS={
   aluno:['alu-nome','alu-nasc','alu-sexo','alu-escola','alu-turma','alu-turno','alu-nee','alu-cid','alu-resp','alu-tel','alu-remail','alu-professor','alu-laudo','alu-adapt','alu-obs'],
   'reg-aluno':['ra-aluno','ra-data','ra-tipo','ra-area','ra-ativ','ra-evol','ra-obs'],
   sessao:['ses-data','ses-hora','ses-professor','ses-local','ses-tema','ses-alunos','ses-ativ','ses-rec','ses-obs'],
-  desempenho:['des-data','des-aluno','des-area','des-nivel','des-obs','des-rec']
+  desempenho:['des-data','des-aluno','des-area','des-nivel','des-obs','des-rec'],
+  // Campos para o modal de edição de frequência
+  frequencia_edit:['edit-fre-status','edit-fre-justificativa']
 };
 
 function getFieldKeys(type){
@@ -594,7 +621,10 @@ function getFieldKeys(type){
     aluno:['nome','nasc','sexo','escola','turma','turno','nee','cid','resp','tel','remail','professor','laudo','adapt','obs'],
     'reg-aluno':['aluno','data','tipo','area','ativ','evol','obs'],
     sessao:['data','hora','professor','local','tema','alunos','ativ','rec','obs'],
-    desempenho:['data','aluno','area','nivel','obs','rec']
+    frequencia:['data','turma','aluno','status','justificativa'],
+    desempenho:['data','aluno','area','nivel','obs','rec'],
+    // Chaves para o modal de edição de frequência
+    frequencia_edit:['status','justificativa']
   };
   return map[type]||[];
 }
@@ -715,7 +745,10 @@ function salvar(type){
   }
 
   limpar(type);
-  renderTabela(type);
+  // Não renderiza a tabela de frequência aqui para que só apareça ao buscar
+  if (type !== 'frequencia') {
+    renderTabela(type);
+  }
   popularSelects();
   atualizarDashboard();
   if(!SHEETS_URL) toast('Registro salvo com sucesso!','tok');
@@ -789,7 +822,10 @@ function atualizar(type){
   }
 
   cancelEdit(type);
-  renderTabela(type);
+  // Não renderiza a tabela de frequência aqui para que só apareça ao buscar
+  if (type !== 'frequencia') {
+    renderTabela(type);
+  }
   popularSelects();
   atualizarDashboard();
   toast('Registro atualizado com sucesso!','tok');
@@ -860,7 +896,16 @@ function excluir(type,idx){
     });
   }
 
-  renderTabela(type);
+  // Não renderiza a tabela de frequência aqui para que só apareça ao buscar
+  if (type !== 'frequencia') {
+    renderTabela(type);
+  } else {
+    // Se for frequência, re-renderiza a tabela de frequência após a exclusão
+    // para refletir a mudança, mas apenas se já estiver sendo exibida (após uma busca)
+    if (document.getElementById('tb-frequencia').innerHTML !== '<tr class="erow"><td colspan="6">Nenhum registro cadastrado.</td></tr>') {
+      renderTabela('frequencia');
+    }
+  }
   popularSelects();
   atualizarDashboard();
   toast('Registro excluído.','tinf');
@@ -910,6 +955,18 @@ function editar(type,idx){
         return;
       }
     }
+  }
+
+  if(type === 'frequencia'){
+    var record = DB.frequencia[idx];
+    editIdx.frequencia = idx; // Armazena o índice para edição
+    document.getElementById('edit-fre-data').textContent = esc(record.data);
+    document.getElementById('edit-fre-turma').textContent = esc(record.turma);
+    document.getElementById('edit-fre-aluno').textContent = esc(record.aluno);
+    document.getElementById('edit-fre-status').value = record.status;
+    document.getElementById('edit-fre-justificativa').value = record.justificativa;
+    document.getElementById('modal-edit-frequencia').classList.add('show');
+    return; // Sai da função para não usar o fluxo de edição genérico
   }
 
   editIdx[type]=idx;
@@ -964,6 +1021,7 @@ function limpar(type){
     } else { el.value=''; }
   });
   if(type==='frequencia'){
+    document.getElementById('fre-turma').value = ''; // Limpa a seleção da turma
     document.getElementById('fre-lista').innerHTML=
       '<div style="text-align:center;color:var(--mu);padding:20px;font-style:italic">👆 Selecione uma turma para carregar os alunos.</div>';
   }
@@ -992,11 +1050,11 @@ function salvarFrequencia(){
   var count=0;
   items.forEach(function(item){
     var nome=item.querySelector('.fn').textContent;
-    var sel=item.querySelector('select');
-    var inp=item.querySelector('input[type=text]');
+    var sel=item.querySelector('select[name^="freq_"]'); // Seleciona o select de frequência
+    var justSel=item.querySelector('select[name^="just_"]'); // Seleciona o select de justificativa
     var obj={data:data,turma:turma,aluno:nome,
              status:sel?sel.value:'Presente',
-             justificativa:inp?inp.value:''};
+             justificativa:justSel?justSel.value:''};
     DB.frequencia.push(obj);
     // Envia para Sheets automaticamente
     if(SHEETS_URL){
@@ -1011,10 +1069,62 @@ function salvarFrequencia(){
     }
     count++;
   });
-  renderTabela('frequencia');
+  // Não renderiza a tabela de frequência aqui, pois ela só aparece ao buscar
+  // renderTabela('frequencia');
   limpar('frequencia');
   atualizarDashboard();
   toast(count+' registros de frequência salvos!','tok');
+}
+
+// Nova função para salvar edição de frequência
+function salvarEdicaoFrequencia(){
+  var idx = editIdx.frequencia;
+  if(idx < 0) return; // Nenhum item em edição
+
+  var obj = DB.frequencia[idx]; // Pega o objeto original
+  obj.status = document.getElementById('edit-fre-status').value;
+  obj.justificativa = document.getElementById('edit-fre-justificativa').value;
+
+  // Validação de permissão para gestores e coordenadores (similar ao salvar/atualizar geral)
+  if ((currentUser.role === 'gestor' || currentUser.role === 'coordenador')) {
+    const aluno = DB.aluno.find(a => a.nome === obj.aluno);
+    if (!aluno || aluno.escola !== currentUser.escola) {
+      toast('Você só pode atualizar registros para alunos da sua escola (' + currentUser.escola + ').','terr');
+      return;
+    }
+  } else if (currentUser.role === 'professor') {
+    var alunosPermitidos = getAlunosFiltrados().map(function(a){return a.nome;});
+    if (alunosPermitidos.indexOf(obj.aluno) === -1) {
+      toast('Você só pode atualizar registros para alunos da sua turma.','terr');
+      return;
+    }
+  }
+
+  // Envia TODOS os registros daquele tipo para o Sheets, limpando e reescrevendo a aba
+  if(SHEETS_URL){
+    var payload={
+      aba: ABAS.frequencia,
+      acao: 'limparEReescrever',
+      linhas: DB.frequencia.map(function(o){ return montarLinha('frequencia',o); }),
+      usuario: currentUser ? currentUser.nome : 'Sistema'
+    };
+    fetch(SHEETS_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  }
+
+  fecharModalEditFrequencia();
+  renderTabela('frequencia'); // Re-renderiza a tabela após a edição
+  atualizarDashboard();
+  toast('Registro de frequência atualizado com sucesso!','tok');
+}
+
+function fecharModalEditFrequencia(){
+  document.getElementById('modal-edit-frequencia').classList.remove('show');
+  editIdx.frequencia = -1; // Limpa o índice de edição
 }
 
 // ================================================
@@ -1081,6 +1191,33 @@ function renderTabela(type){
     }
   }
 
+  // Adicionar filtragem por data e turma para a tabela de frequência
+  if(type === 'frequencia'){
+    var filterDate = document.getElementById('filter-fre-data').value;
+    var filterTurma = document.getElementById('filter-fre-turma').value;
+
+    // Popular o select de filtro de turma
+    var filterTurmaSelect = document.getElementById('filter-fre-turma');
+    if (filterTurmaSelect) { // Popula sempre para garantir que esteja atualizado
+      var currentSelected = filterTurmaSelect.value;
+      filterTurmaSelect.innerHTML = '<option value="">Todas as Turmas</option>';
+      var turmasUnicas = [...new Set(DB.frequencia.map(f => f.turma))].sort();
+      turmasUnicas.forEach(function(t){
+        var op = document.createElement('option');
+        op.value = t;
+        op.textContent = t;
+        filterTurmaSelect.appendChild(op);
+      });
+      filterTurmaSelect.value = currentSelected; // Mantém a seleção após popular
+    }
+
+    data = data.filter(function(f){
+      var matchesDate = filterDate ? f.data === filterDate : true;
+      var matchesTurma = filterTurma ? f.turma === filterTurma : true;
+      return matchesDate && matchesTurma;
+    });
+  }
+
   if(cnt) cnt.textContent=data.length;
   if(data.length===0){
     tbody.innerHTML='<tr class="erow"><td colspan="20">Nenhum registro cadastrado.</td></tr>';
@@ -1099,7 +1236,7 @@ function renderTabela(type){
     } else if(type==='professor'){
       html+=td(r.nome)+td(r.cpf)+td(r.escola)+td(r.esp)+td(r.turno)+td(r.vinculo)+td(r.tel)+td(r.email);
     } else if(type==='turma'){
-      html+=td(r.nome)+td(r.escola)+td(r.turno)+td(r.professor)+td(r.ano)+td(trunca(r.obs,25));
+      html+=td(r.nome)+td(r.escola)+td(r.turno)+td(r.professor)+td(trunca(r.ano,25))+td(trunca(r.obs,25));
     } else if(type==='aluno'){
       html+=td(r.nome)+td(r.nasc)+td(r.sexo)+td(r.escola)+td(r.turma)+td(r.turno)+td(r.nee)+td(r.cid)+td(r.resp)+td(r.tel)+td(r.professor);
     } else if(type==='reg-aluno'){
@@ -1479,7 +1616,10 @@ window.addEventListener('DOMContentLoaded',function(){
   }
   ['escola','gestor','coordenador','professor','turma','aluno',
    'reg-aluno','sessao','frequencia','desempenho'].forEach(function(t){
-    renderTabela(t);
+    // Não renderiza a tabela de frequência aqui na inicialização
+    if (t !== 'frequencia') {
+      renderTabela(t);
+    }
   });
   atualizarDashboard();
 });
